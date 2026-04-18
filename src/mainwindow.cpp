@@ -86,6 +86,12 @@ MainWindow::MainWindow()
     connect(plots, &PlotView::zoomIn, dock, &SpectrogramControls::zoomIn);
     connect(plots, &PlotView::zoomOut, dock, &SpectrogramControls::zoomOut);
 
+    // Connect SNR analysis
+    connect(plots, &PlotView::snrUpdated, dock, &SpectrogramControls::updateSNRAnalysis);
+    connect(dock->cursorsCheckBox, &QCheckBox::stateChanged, this, [this](int state) {
+        if (state == Qt::Unchecked) dock->clearSNRLabels();
+    });
+
     // Set defaults after making connections so everything is in sync
     dock->setDefaults();
 

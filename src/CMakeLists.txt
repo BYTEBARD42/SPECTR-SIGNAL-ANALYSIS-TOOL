@@ -30,6 +30,7 @@ set(CMAKE_CXX_STANDARD 14)
 list(APPEND spectr_sources 
     abstractsamplesource.cpp
     amplitudedemod.cpp
+    constellationplot.cpp
     cursor.cpp
     cursors.cpp
     main.cpp

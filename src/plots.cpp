@@ -22,6 +22,7 @@
 #include "phasedemod.h"
 #include "threshold.h"
 #include "traceplot.h"
+#include "constellationplot.h"
 
 #include "plots.h"
 
@@ -59,4 +60,9 @@ Plot* Plots::thresholdPlot(std::shared_ptr<AbstractSampleSource> source)
     typedef SampleSource<float> Source;
     std::shared_ptr<Source> concrete= std::dynamic_pointer_cast<Source>(source);
     return new TracePlot( std::make_shared<Threshold>( concrete ) );
+}
+
+Plot* Plots::constellationPlot(std::shared_ptr<AbstractSampleSource> source)
+{
+    return new ConstellationPlot(source);
 }

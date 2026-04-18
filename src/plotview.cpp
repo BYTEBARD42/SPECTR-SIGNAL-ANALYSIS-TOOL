@@ -202,6 +202,7 @@ void PlotView::cursorsMoved()
     };
 
     emitTimeSelection();
+    computeSNR();
     viewport()->update();
 }
 
@@ -684,4 +685,76 @@ int PlotView::sampleToColumn(size_t sample)
 size_t PlotView::columnToSample(int col)
 {
     return col * samplesPerColumn();
+}
+
+void PlotView::computeSNR()
+{
+    if (!cursorsEnabled || selectedSamples.length() == 0)
+        return;
+
+    // Only works with complex sample sources
+    if (mainSampleSource == nullptr)
+        return;
+
+    size_t count = selectedSamples.length();
+    // Cap at 65536 samples for performance
+    size_t maxCount = 65536;
+    size_t actualCount = std::min(count, maxCount);
+    size_t start = selectedSamples.minimum;
+
+    auto samples = mainSampleSource->getSamples(start, actualCount);
+    if (samples == nullptr)
+        return;
+
+    // Compute signal power: mean(|x|^2)
+    double totalPower = 0.0;
+    double maxSamplePower = 0.0;
+    std::vector<double> samplePowers(actualCount);
+
+    for (size_t i = 0; i < actualCount; i++) {
+        double power = std::norm(samples[i]);  // |x|^2 = I^2 + Q^2
+        samplePowers[i] = power;
+        totalPower += power;
+        if (power > maxSamplePower)
+            maxSamplePower = power;
+    }
+
+    double meanPower = totalPower / actualCount;
+
+    if (meanPower < 1e-20) return;  // Avoid log of zero
+
+    // Estimate noise using the variance of the signal power
+    // This is a simple estimator: noise = variance of the magnitude
+    double sumI = 0.0, sumQ = 0.0;
+    for (size_t i = 0; i < actualCount; i++) {
+        sumI += samples[i].real();
+        sumQ += samples[i].imag();
+    }
+    double meanI = sumI / actualCount;
+    double meanQ = sumQ / actualCount;
+
+    // Noise power = variance around the mean (signal component)
+    double noisePower = 0.0;
+    for (size_t i = 0; i < actualCount; i++) {
+        double diffI = samples[i].real() - meanI;
+        double diffQ = samples[i].imag() - meanQ;
+        noisePower += diffI * diffI + diffQ * diffQ;
+    }
+    noisePower /= actualCount;
+
+    // Signal power = mean^2 (the DC/carrier component)
+    double signalPower = meanI * meanI + meanQ * meanQ;
+
+    // If noise dominates, use the simpler ratio
+    if (signalPower < 1e-20 && noisePower < 1e-20) return;
+
+    // Convert to dB
+    float signalPowerDB = 10.0f * log10f(meanPower);
+    float noisePowerDB = (noisePower > 1e-20) ? 10.0f * log10f(noisePower) : -100.0f;
+    float snrDB = (noisePower > 1e-20) ? 10.0f * log10f(signalPower / noisePower) : 99.9f;
+
+    // Clamp SNR to reasonable range
+    snrDB = std::max(-10.0f, std::min(99.9f, snrDB));
+
+    emit snrUpdated(signalPowerDB, noisePowerDB, snrDB);
 }

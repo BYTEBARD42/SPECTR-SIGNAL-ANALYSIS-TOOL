@@ -41,6 +41,7 @@ public:
     static Plot* frequencyPlot(std::shared_ptr<AbstractSampleSource> source);
     static Plot* phasePlot(std::shared_ptr<AbstractSampleSource> source);
     static Plot* thresholdPlot(std::shared_ptr<AbstractSampleSource> source);
+    static Plot* constellationPlot(std::shared_ptr<AbstractSampleSource> source);
 
     static class _init
     {
@@ -51,6 +52,7 @@ public:
             plots.emplace(typeid(std::complex<float>), PlotInfo{"frequency plot", frequencyPlot});
             plots.emplace(typeid(std::complex<float>), PlotInfo{"phase plot", phasePlot});
             plots.emplace(typeid(float), PlotInfo{"threshold plot", thresholdPlot});
+            plots.emplace(typeid(std::complex<float>), PlotInfo{"constellation plot", constellationPlot});
         };
     } _initializer;
 };

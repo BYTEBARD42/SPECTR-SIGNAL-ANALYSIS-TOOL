@@ -160,6 +160,32 @@ SpectrogramControls::SpectrogramControls(const QString & title, QWidget * parent
 
     mainLayout->addWidget(sigmfGroup);
 
+    // ═══════════════════════════════════════════════════════════════
+    // SIGNAL ANALYSIS group
+    // ═══════════════════════════════════════════════════════════════
+    QGroupBox *analysisGroup = new QGroupBox(tr("Signal Analysis"), widget);
+    QFormLayout *analysisLayout = new QFormLayout(analysisGroup);
+    analysisLayout->setSpacing(6);
+    analysisLayout->setContentsMargins(10, 18, 10, 10);
+
+    signalPowerLabel = new QLabel(tr("—"));
+    signalPowerLabel->setObjectName("valueLabel");
+    analysisLayout->addRow(new QLabel(tr("Signal power:")), signalPowerLabel);
+
+    noiseFloorLabel = new QLabel(tr("—"));
+    noiseFloorLabel->setObjectName("valueLabel");
+    analysisLayout->addRow(new QLabel(tr("Noise floor:")), noiseFloorLabel);
+
+    snrValueLabel = new QLabel(tr("—"));
+    snrValueLabel->setObjectName("valueLabel");
+    analysisLayout->addRow(new QLabel(tr("SNR:")), snrValueLabel);
+
+    QLabel *snrHint = new QLabel(tr("Enable cursors to measure"));
+    snrHint->setStyleSheet("color: #585b70; font-size: 7pt; font-style: italic;");
+    analysisLayout->addRow(snrHint);
+
+    mainLayout->addWidget(analysisGroup);
+
     // Push remaining space to the bottom
     mainLayout->addStretch(1);
 
@@ -333,4 +359,30 @@ void SpectrogramControls::updatePowerMaxLabel(int value)
 void SpectrogramControls::updatePowerMinLabel(int value)
 {
     powerMinValueLabel->setText(QString::number(value) + " dB");
+}
+
+void SpectrogramControls::updateSNRAnalysis(float signalPower, float noisePower, float snr)
+{
+    signalPowerLabel->setText(QString::number(signalPower, 'f', 1) + " dBFS");
+    noiseFloorLabel->setText(QString::number(noisePower, 'f', 1) + " dBFS");
+
+    // Color the SNR value based on quality
+    QString color;
+    if (snr >= 20.0f)
+        color = "#a6e3a1";  // Green - good
+    else if (snr >= 10.0f)
+        color = "#f9e2af";  // Yellow - moderate
+    else
+        color = "#f38ba8";  // Red - poor
+
+    snrValueLabel->setText(QString::number(snr, 'f', 1) + " dB");
+    snrValueLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 9pt;").arg(color));
+}
+
+void SpectrogramControls::clearSNRLabels()
+{
+    signalPowerLabel->setText(tr("—"));
+    noiseFloorLabel->setText(tr("—"));
+    snrValueLabel->setText(tr("—"));
+    snrValueLabel->setStyleSheet("");  // Reset to default style
 }

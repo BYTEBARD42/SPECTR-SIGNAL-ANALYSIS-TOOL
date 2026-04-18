@@ -48,6 +48,8 @@ public slots:
     void zoomIn();
     void zoomOut();
     void enableAnnotations(bool enabled);
+    void updateSNRAnalysis(float signalPower, float noisePower, float snr);
+    void clearSNRLabels();
 
 private slots:
     void fftSizeChanged(int value);
@@ -72,6 +74,11 @@ private:
     QLabel *zoomValueLabel;
     QLabel *powerMaxValueLabel;
     QLabel *powerMinValueLabel;
+
+    // SNR analysis labels
+    QLabel *signalPowerLabel;
+    QLabel *noiseFloorLabel;
+    QLabel *snrValueLabel;
 
 public:
     QPushButton *fileOpenButton;

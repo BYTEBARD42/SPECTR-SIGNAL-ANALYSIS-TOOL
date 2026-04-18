@@ -39,6 +39,7 @@ public:
 
 signals:
     void timeSelectionChanged(float time);
+    void snrUpdated(float signalPower, float noisePower, float snr);
     void zoomIn();
     void zoomOut();
 
@@ -96,6 +97,7 @@ private:
     void updateView(bool reCenter = false, bool expanding = false);
     void paintTimeScale(QPainter &painter, QRect &rect, range_t<size_t> sampleRange);
     void updateAnnotationTooltip(QMouseEvent *event);
+    void computeSNR();
 
     int sampleToColumn(size_t sample);
     size_t columnToSample(int col);
