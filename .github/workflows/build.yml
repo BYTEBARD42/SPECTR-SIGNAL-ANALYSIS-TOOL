@@ -1,0 +1,67 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+  # Run every friday
+  schedule:
+    - cron: 1 12 * * 5
+
+env:
+  BUILD_TYPE: Release
+  # For macOS qt keg-only package
+  CMAKE_PREFIX_PATH: '/opt/homebrew/opt/qt@5'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['macos-latest', 'ubuntu-24.04', 'ubuntu-22.04']
+        qt: ['qt5', 'qt6']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set variables Qt5
+      run: |
+        echo "QTPKG_MAC=qt@5" >> $GITHUB_ENV
+        echo "QTPKG_UBUNTU=qtbase5-dev" >> $GITHUB_ENV
+      if: matrix.qt == 'qt5'
+
+    - name: Set variables Qt6
+      run: |
+        echo "QTPKG_MAC=qt@6" >> $GITHUB_ENV
+        echo "QTPKG_UBUNTU=qt6-base-dev" >> $GITHUB_ENV
+      if: matrix.qt == 'qt6'
+
+    - name: Install dependencies (macOS)
+      run: brew install fftw liquid-dsp ${{ env.QTPKG_MAC }}
+      if: matrix.os == 'macos-latest'
+
+    - name: Install dependencies (Ubuntu)
+      run: |
+        sudo apt update
+        sudo apt install libfftw3-dev libliquid-dev libgl1-mesa-dev ${{ env.QTPKG_UBUNTU }}
+      if: startsWith(matrix.os, 'ubuntu-')
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: cmake --build . --config $BUILD_TYPE
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: ctest -C $BUILD_TYPE
+
