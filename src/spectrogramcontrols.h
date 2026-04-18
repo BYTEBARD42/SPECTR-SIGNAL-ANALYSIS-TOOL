@@ -45,13 +45,13 @@ public slots:
     void zoomIn();
     void zoomOut();
     void enableAnnotations(bool enabled);
+    void fileOpenButtonClicked();
 
 private slots:
     void fftSizeChanged(int value);
     void zoomLevelChanged(int value);
     void powerMinChanged(int value);
     void powerMaxChanged(int value);
-    void fileOpenButtonClicked();
     void cursorsStateChanged(int state);
 
 private:
@@ -76,4 +76,10 @@ public:
     QCheckBox *scalesCheckBox;
     QCheckBox *annosCheckBox;
     QCheckBox *commentsCheckBox;
+
+    // Value display labels
+    QLabel *fftSizeLabel;
+    QLabel *zoomLevelLabel;
+    QLabel *powerMaxLabel;
+    QLabel *powerMinLabel;
 };

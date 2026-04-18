@@ -30,6 +30,7 @@
 #include <functional>
 #include <cstdlib>
 #include <limits>
+#include "stylesheet.h"
 #include "util.h"
 
 
@@ -43,9 +44,41 @@ SpectrogramPlot::SpectrogramPlot(std::shared_ptr<SampleSource<std::complex<float
     frequencyScaleEnabled = false;
     sigmfAnnotationsEnabled = true;
 
+    // Viridis perceptually-uniform colormap (256 entries)
+    // Dark purple → teal → yellow — industry standard for scientific visualization
+    static const uint8_t viridis_r[256] = {
+        68,68,69,69,69,69,69,69,69,70,70,70,70,70,70,70,71,71,71,71,71,71,71,71,71,71,71,71,71,72,72,72,
+        72,72,72,72,72,72,72,72,71,71,71,71,71,71,71,71,71,71,70,70,70,70,70,69,69,69,69,68,68,68,67,67,
+        67,66,66,66,65,65,64,64,63,63,63,62,62,61,61,60,60,59,59,58,58,57,57,56,55,55,54,54,53,52,52,51,
+        51,50,49,49,48,48,47,46,46,45,45,44,43,43,42,42,41,41,40,40,39,39,38,38,37,37,37,36,36,36,35,35,
+        35,35,35,35,35,35,35,35,35,35,36,36,36,37,37,38,38,39,40,40,41,42,43,44,45,46,47,48,49,50,52,53,
+        54,56,57,59,60,62,63,65,67,68,70,72,74,76,78,79,81,83,86,88,90,92,94,96,99,101,103,106,108,110,113,115,
+        117,120,122,125,127,130,132,135,137,140,142,145,148,150,153,155,158,161,163,166,169,171,174,177,179,182,185,188,190,193,196,199,
+        201,204,207,210,212,215,218,221,224,226,229,232,235,238,240,243,246,248,250,253,254,254,254,253,252,251,250,248,246,245,243,241
+    };
+    static const uint8_t viridis_g[256] = {
+        1,2,3,5,6,8,9,11,12,14,15,17,18,20,21,22,24,25,26,28,29,30,32,33,34,35,36,37,39,40,41,42,
+        43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,63,64,65,66,67,68,69,69,70,71,72,
+        72,73,74,74,75,76,76,77,78,78,79,79,80,81,81,82,82,83,83,84,84,85,85,86,86,87,87,88,88,88,89,89,
+        90,90,90,91,91,91,92,92,92,93,93,93,94,94,94,94,95,95,95,96,96,96,97,97,97,97,98,98,98,99,99,99,
+        100,100,101,101,101,102,102,103,103,103,104,104,105,105,106,106,107,107,108,108,109,110,110,111,111,112,113,113,114,115,115,116,
+        117,117,118,119,120,120,121,122,123,123,124,125,126,127,127,128,129,130,131,132,132,133,134,135,136,137,138,139,140,141,142,143,
+        144,145,146,147,148,149,150,151,152,153,154,155,156,158,159,160,161,162,163,164,166,167,168,169,170,172,173,174,175,177,178,179,
+        181,182,183,185,186,187,189,190,191,193,194,196,197,199,200,201,203,204,206,207,209,210,211,212,213,214,215,215,216,217,218,219
+    };
+    static const uint8_t viridis_b[256] = {
+        84,85,87,88,89,91,92,93,94,95,97,98,99,100,101,102,103,104,105,106,107,108,108,109,110,111,111,112,113,113,114,114,
+        115,115,116,116,116,117,117,117,118,118,118,118,118,119,119,119,119,119,119,119,119,119,119,119,119,119,119,119,119,118,118,118,
+        118,118,117,117,117,117,116,116,116,115,115,115,114,114,113,113,113,112,112,111,111,110,110,109,109,108,107,107,106,106,105,104,
+        104,103,102,102,101,100,100,99,98,97,96,96,95,94,93,92,92,91,90,89,88,87,86,86,85,84,83,82,81,80,79,78,
+        77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,60,59,58,57,56,55,54,53,51,50,49,48,47,46,45,43,
+        42,41,40,39,38,37,36,35,34,33,32,31,30,30,29,28,28,27,27,26,26,26,25,25,25,25,25,25,25,25,26,26,
+        27,27,28,29,29,30,31,32,33,35,36,37,39,40,42,44,45,47,49,51,53,55,57,59,61,63,66,68,70,73,75,78,
+        80,83,85,88,91,93,96,99,102,104,107,110,113,116,119,122,125,128,131,134,137,139,142,144,146,148,149,151,152,154,155,156
+    };
+
     for (int i = 0; i < 256; i++) {
-        float p = (float)i / 256;
-        colormap[i] = QColor::fromHsvF(p * 0.83f, 1.0, 1.0 - p).rgba();
+        colormap[i] = qRgb(viridis_r[i], viridis_g[i], viridis_b[i]);
     }
 
     tunerTransform = std::make_shared<TunerTransform>(src);
@@ -101,9 +134,17 @@ void SpectrogramPlot::paintFrequencyScale(QPainter &painter, QRect &rect)
     }
 
     painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
 
-    QPen pen(Qt::white, 1, Qt::SolidLine);
+    // Semi-transparent background strip for readability
+    painter.fillRect(QRect(0, rect.y(), 100, rect.height()), QColor(10, 10, 20, 160));
+
+    QPen pen(Theme::accent, 1, Qt::SolidLine);
     painter.setPen(pen);
+    QFont scaleFont = painter.font();
+    scaleFont.setPointSize(scaleFont.pointSize() - 1);
+    painter.setFont(scaleFont);
     QFontMetrics fm(painter.font());
 
 
@@ -131,17 +172,21 @@ void SpectrogramPlot::paintFrequencyScale(QPainter &painter, QRect &rect)
                 snprintf(buf, sizeof(buf), "-%lu Hz", tick);
             }
 
+            painter.setPen(Theme::textPrimary);
             if (!inputSource->realSignal())
                 painter.drawText(5, tickny - 5, buf);
 
             buf[0] = ' ';
             painter.drawText(5, tickpy + 15, buf);
+            painter.setPen(pen);
         }
 
         tick += bwPerTick;
     }
 
     // Draw small ticks
+    QPen smallTickPen(Theme::accentDim, 1, Qt::SolidLine);
+    painter.setPen(smallTickPen);
     bwPerTick /= 10;
 
     if (bwPerTick >= 1 ) {
@@ -167,8 +212,9 @@ void SpectrogramPlot::paintAnnotations(QPainter &painter, QRect &rect, range_t<s
     int zero = rect.y() + rect.height() / 2;
 
     painter.save();
-    QPen pen(Qt::white, 1, Qt::SolidLine);
-    painter.setPen(pen);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+
     QFontMetrics fm(painter.font());
 
     visibleAnnotationLocations.clear();
@@ -196,9 +242,17 @@ void SpectrogramPlot::paintAnnotations(QPainter &painter, QRect &rect, range_t<s
             int height = (a.frequencyRange.maximum - a.frequencyRange.minimum) / sampleRate * rect.height();
             int width = (a.sampleRange.maximum - a.sampleRange.minimum) / getStride();
 
-            // Draw the label 2 pixels above the box
-            painter.drawText(x, y - 2, a.label);
+            // Semi-transparent filled box with accent border
+            painter.fillRect(QRect(x, y, width, height), QColor(0, 212, 170, 25));
+            QPen annoPen(Theme::accent, 1.5, Qt::SolidLine);
+            painter.setPen(annoPen);
             painter.drawRect(x, y, width, height);
+
+            // Label with text shadow for readability
+            painter.setPen(QColor(0, 0, 0, 160));
+            painter.drawText(x + 1, y - 1, a.label);
+            painter.setPen(Theme::textPrimary);
+            painter.drawText(x, y - 2, a.label);
 
             visibleAnnotationLocations.emplace_back(a, x, y, width, height);
         }

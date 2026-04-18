@@ -19,14 +19,30 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QFont>
 
 #include "mainwindow.h"
+#include "stylesheet.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("spectr");
     a.setOrganizationName("spectr");
+
+    // Apply modern font
+#ifdef Q_OS_WIN
+    QFont appFont("Segoe UI", 10);
+#elif defined(Q_OS_MAC)
+    QFont appFont("SF Pro Text", 12);
+#else
+    QFont appFont("Noto Sans", 10);
+#endif
+    appFont.setHintingPreference(QFont::PreferFullHinting);
+    a.setFont(appFont);
+
+    // Apply global dark theme
+    a.setStyleSheet(globalStylesheet);
 
     MainWindow mainWin;
 

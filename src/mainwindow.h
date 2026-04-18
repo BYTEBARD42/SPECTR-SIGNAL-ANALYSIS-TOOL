@@ -21,6 +21,10 @@
 
 #include <QMainWindow>
 #include <QScrollArea>
+#include <QStatusBar>
+#include <QToolBar>
+#include <QLabel>
+#include <QAction>
 #include "spectrogramcontrols.h"
 #include "plotview.h"
 
@@ -43,4 +47,17 @@ private:
     SpectrogramControls *dock;
     PlotView *plots;
     InputSource *input;
+
+    // Toolbar
+    QToolBar *toolBar;
+    QAction *openAction;
+    QAction *zoomInAction;
+    QAction *zoomOutAction;
+    QAction *toggleCursorsAction;
+    QAction *toggleScalesAction;
+
+    // Status bar labels
+    QLabel *statusFileLabel;
+    QLabel *statusRateLabel;
+    QLabel *statusZoomLabel;
 };

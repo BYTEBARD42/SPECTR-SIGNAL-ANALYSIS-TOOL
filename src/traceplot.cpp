@@ -23,6 +23,7 @@
 #include <QPainterPath>
 #include "samplesource.h"
 #include "traceplot.h"
+#include "stylesheet.h"
 
 TracePlot::TracePlot(std::shared_ptr<AbstractSampleSource> source) : Plot(source) {
     connect(this, &TracePlot::imageReady, this, &TracePlot::handleImage);
@@ -83,6 +84,14 @@ void TracePlot::drawTile(QString key, const QRect &rect, range_t<size_t> sampleR
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
+    // Draw faint horizontal grid lines at 25%, 50%, 75%
+    QPen gridPen(Theme::gridLine, 1, Qt::DashLine);
+    painter.setPen(gridPen);
+    for (int g = 1; g <= 3; g++) {
+        int gy = rect.height() * g / 4;
+        painter.drawLine(rect.x(), gy, rect.x() + rect.width(), gy);
+    }
+
     auto firstSample = sampleRange.minimum;
     auto length = sampleRange.length();
 
@@ -92,9 +101,9 @@ void TracePlot::drawTile(QString key, const QRect &rect, range_t<size_t> sampleR
         if (samples == nullptr)
             return;
 
-        painter.setPen(Qt::red);
+        painter.setPen(QPen(Theme::traceI, 1.5));
         plotTrace(painter, rect, reinterpret_cast<float*>(samples.get()), length, 2);
-        painter.setPen(Qt::blue);
+        painter.setPen(QPen(Theme::traceQ, 1.5));
         plotTrace(painter, rect, reinterpret_cast<float*>(samples.get())+1, length, 2);
 
     // Otherwise is it single channel?
@@ -103,7 +112,7 @@ void TracePlot::drawTile(QString key, const QRect &rect, range_t<size_t> sampleR
         if (samples == nullptr)
             return;
 
-        painter.setPen(Qt::green);
+        painter.setPen(QPen(Theme::traceSingle, 1.5));
         plotTrace(painter, rect, samples.get(), length, 1);
     } else {
         throw std::runtime_error("TracePlot::paintMid: Unsupported source type");

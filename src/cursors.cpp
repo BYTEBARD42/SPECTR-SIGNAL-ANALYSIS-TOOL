@@ -20,6 +20,7 @@
 #include <QApplication>
 #include <QDebug>
 #include "cursors.h"
+#include "stylesheet.h"
 
 Cursors::Cursors(QObject * parent) : QObject::QObject(parent)
 {
@@ -106,24 +107,30 @@ void Cursors::leaveEvent()
 void Cursors::paintFront(QPainter &painter, QRect &rect, range_t<size_t> sampleRange)
 {
     painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
 
     QRect cursorRect(minCursor->pos(), rect.top(), maxCursor->pos() - minCursor->pos(), rect.height());
 
-    // Draw translucent white fill for highlight
+    // Draw accent-tinted fill for highlight
     painter.fillRect(
         cursorRect,
-        QBrush(QColor(255, 255, 255, 50))
+        QBrush(Theme::cursorFill)
     );
 
-    // Draw vertical edges for individual segments
-    painter.setPen(QPen(Qt::gray, 1, Qt::DashLine));
+    // Draw vertical edges for individual segments with accent color
+    painter.setPen(QPen(QColor(0, 212, 170, 60), 1, Qt::DashLine));
     for (long i = 1; i < segmentCount; i++) {
         int pos = minCursor->pos() + (i * cursorRect.width() / segmentCount);
         painter.drawLine(pos, rect.top(), pos, rect.bottom());
     }
 
-    // Draw vertical edges
-    painter.setPen(QPen(Qt::white, 1, Qt::SolidLine));
+    // Draw glow behind cursor lines (wider, semi-transparent)
+    painter.setPen(QPen(Theme::cursorGlow, 5, Qt::SolidLine));
+    painter.drawLine(minCursor->pos(), rect.top(), minCursor->pos(), rect.bottom());
+    painter.drawLine(maxCursor->pos(), rect.top(), maxCursor->pos(), rect.bottom());
+
+    // Draw crisp cursor lines on top
+    painter.setPen(QPen(Theme::cursorLine, 1.5, Qt::SolidLine));
     painter.drawLine(minCursor->pos(), rect.top(), minCursor->pos(), rect.bottom());
     painter.drawLine(maxCursor->pos(), rect.top(), maxCursor->pos(), rect.bottom());
 

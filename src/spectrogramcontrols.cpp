@@ -23,6 +23,9 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <QLabel>
+#include <QGroupBox>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <cmath>
 #include "util.h"
 
@@ -30,87 +33,155 @@ SpectrogramControls::SpectrogramControls(const QString & title, QWidget * parent
     : QDockWidget::QDockWidget(title, parent)
 {
     widget = new QWidget(this);
-    layout = new QFormLayout(widget);
 
-    fileOpenButton = new QPushButton("Open file...", widget);
-    layout->addRow(fileOpenButton);
+    // Main vertical layout for the dock
+    QVBoxLayout *mainLayout = new QVBoxLayout(widget);
+    mainLayout->setSpacing(8);
+    mainLayout->setContentsMargins(8, 8, 8, 8);
 
+    // ── Open File Button ─────────────────────────────────────────────────────
+    fileOpenButton = new QPushButton(QString::fromUtf8("\xF0\x9F\x93\x82  Open file..."), widget);
+    fileOpenButton->setMinimumHeight(36);
+    mainLayout->addWidget(fileOpenButton);
+
+    // ── Sample Rate ──────────────────────────────────────────────────────────
+    layout = new QFormLayout();
+    layout->setSpacing(6);
     sampleRate = new QLineEdit();
     auto double_validator = new QDoubleValidator(this);
     double_validator->setBottom(0.0);
     sampleRate->setValidator(double_validator);
     layout->addRow(new QLabel(tr("Sample rate:")), sampleRate);
+    mainLayout->addLayout(layout);
 
-    // Spectrogram settings
-    layout->addRow(new QLabel()); // TODO: find a better way to add an empty row?
-    layout->addRow(new QLabel(tr("<b>Spectrogram</b>")));
+    // ── Spectrogram Group ────────────────────────────────────────────────────
+    QGroupBox *spectrogramGroup = new QGroupBox(tr("Spectrogram"), widget);
+    QFormLayout *specLayout = new QFormLayout(spectrogramGroup);
+    specLayout->setSpacing(6);
+    specLayout->setContentsMargins(10, 16, 10, 10);
 
+    // FFT size slider + value label
+    QHBoxLayout *fftRow = new QHBoxLayout();
     fftSizeSlider = new QSlider(Qt::Horizontal, widget);
     fftSizeSlider->setRange(4, 13);
     fftSizeSlider->setPageStep(1);
+    fftSizeLabel = new QLabel(tr("512"), widget);
+    fftSizeLabel->setMinimumWidth(48);
+    fftSizeLabel->setStyleSheet("color: #00d4aa; font-weight: bold;");
+    fftRow->addWidget(fftSizeSlider);
+    fftRow->addWidget(fftSizeLabel);
+    specLayout->addRow(new QLabel(tr("FFT size:")), fftRow);
 
-    layout->addRow(new QLabel(tr("FFT size:")), fftSizeSlider);
-
+    // Zoom slider + value label
+    QHBoxLayout *zoomRow = new QHBoxLayout();
     zoomLevelSlider = new QSlider(Qt::Horizontal, widget);
     zoomLevelSlider->setRange(0, 10);
     zoomLevelSlider->setPageStep(1);
+    zoomLevelLabel = new QLabel(tr("1×"), widget);
+    zoomLevelLabel->setMinimumWidth(48);
+    zoomLevelLabel->setStyleSheet("color: #00d4aa; font-weight: bold;");
+    zoomRow->addWidget(zoomLevelSlider);
+    zoomRow->addWidget(zoomLevelLabel);
+    specLayout->addRow(new QLabel(tr("Zoom:")), zoomRow);
 
-    layout->addRow(new QLabel(tr("Zoom:")), zoomLevelSlider);
-
+    // Power max slider + value label
+    QHBoxLayout *pmaxRow = new QHBoxLayout();
     powerMaxSlider = new QSlider(Qt::Horizontal, widget);
     powerMaxSlider->setRange(-140, 10);
-    layout->addRow(new QLabel(tr("Power max:")), powerMaxSlider);
+    powerMaxLabel = new QLabel(tr("0 dB"), widget);
+    powerMaxLabel->setMinimumWidth(56);
+    powerMaxLabel->setStyleSheet("color: #00d4aa; font-weight: bold;");
+    pmaxRow->addWidget(powerMaxSlider);
+    pmaxRow->addWidget(powerMaxLabel);
+    specLayout->addRow(new QLabel(tr("Power max:")), pmaxRow);
 
+    // Power min slider + value label
+    QHBoxLayout *pminRow = new QHBoxLayout();
     powerMinSlider = new QSlider(Qt::Horizontal, widget);
     powerMinSlider->setRange(-140, 10);
-    layout->addRow(new QLabel(tr("Power min:")), powerMinSlider);
+    powerMinLabel = new QLabel(tr("-100 dB"), widget);
+    powerMinLabel->setMinimumWidth(56);
+    powerMinLabel->setStyleSheet("color: #00d4aa; font-weight: bold;");
+    pminRow->addWidget(powerMinSlider);
+    pminRow->addWidget(powerMinLabel);
+    specLayout->addRow(new QLabel(tr("Power min:")), pminRow);
 
+    // Scales checkbox
     scalesCheckBox = new QCheckBox(widget);
     scalesCheckBox->setCheckState(Qt::Checked);
-    layout->addRow(new QLabel(tr("Scales:")), scalesCheckBox);
+    specLayout->addRow(new QLabel(tr("Scales:")), scalesCheckBox);
 
-    // Time selection settings
-    layout->addRow(new QLabel()); // TODO: find a better way to add an empty row?
-    layout->addRow(new QLabel(tr("<b>Time selection</b>")));
+    mainLayout->addWidget(spectrogramGroup);
+
+    // ── Time Selection Group ─────────────────────────────────────────────────
+    QGroupBox *timeGroup = new QGroupBox(tr("Time Selection"), widget);
+    QFormLayout *timeLayout = new QFormLayout(timeGroup);
+    timeLayout->setSpacing(6);
+    timeLayout->setContentsMargins(10, 16, 10, 10);
 
     cursorsCheckBox = new QCheckBox(widget);
-    layout->addRow(new QLabel(tr("Enable cursors:")), cursorsCheckBox);
+    timeLayout->addRow(new QLabel(tr("Enable cursors:")), cursorsCheckBox);
 
     cursorSymbolsSpinBox = new QSpinBox();
     cursorSymbolsSpinBox->setMinimum(1);
     cursorSymbolsSpinBox->setMaximum(99999);
-    layout->addRow(new QLabel(tr("Symbols:")), cursorSymbolsSpinBox);
+    timeLayout->addRow(new QLabel(tr("Symbols:")), cursorSymbolsSpinBox);
 
     rateLabel = new QLabel();
-    layout->addRow(new QLabel(tr("Rate:")), rateLabel);
+    timeLayout->addRow(new QLabel(tr("Rate:")), rateLabel);
 
     periodLabel = new QLabel();
-    layout->addRow(new QLabel(tr("Period:")), periodLabel);
+    timeLayout->addRow(new QLabel(tr("Period:")), periodLabel);
 
     symbolRateLabel = new QLabel();
-    layout->addRow(new QLabel(tr("Symbol rate:")), symbolRateLabel);
+    timeLayout->addRow(new QLabel(tr("Symbol rate:")), symbolRateLabel);
 
     symbolPeriodLabel = new QLabel();
-    layout->addRow(new QLabel(tr("Symbol period:")), symbolPeriodLabel);
+    timeLayout->addRow(new QLabel(tr("Symbol period:")), symbolPeriodLabel);
 
-    // SigMF selection settings
-    layout->addRow(new QLabel()); // TODO: find a better way to add an empty row?
-    layout->addRow(new QLabel(tr("<b>SigMF Control</b>")));
+    mainLayout->addWidget(timeGroup);
+
+    // ── SigMF Control Group ──────────────────────────────────────────────────
+    QGroupBox *sigmfGroup = new QGroupBox(tr("SigMF Control"), widget);
+    QFormLayout *sigmfLayout = new QFormLayout(sigmfGroup);
+    sigmfLayout->setSpacing(6);
+    sigmfLayout->setContentsMargins(10, 16, 10, 10);
 
     annosCheckBox = new QCheckBox(widget);
-    layout->addRow(new QLabel(tr("Display Annotations:")), annosCheckBox);
-    commentsCheckBox = new QCheckBox(widget);
-    layout->addRow(new QLabel(tr("Display annotation comments tooltips:")), commentsCheckBox);
+    sigmfLayout->addRow(new QLabel(tr("Annotations:")), annosCheckBox);
 
-    widget->setLayout(layout);
+    commentsCheckBox = new QCheckBox(widget);
+    sigmfLayout->addRow(new QLabel(tr("Comment tooltips:")), commentsCheckBox);
+
+    mainLayout->addWidget(sigmfGroup);
+
+    // Push everything up
+    mainLayout->addStretch(1);
+
+    widget->setLayout(mainLayout);
     setWidget(widget);
 
+    // ── Connections ───────────────────────────────────────────────────────────
     connect(fftSizeSlider, &QSlider::valueChanged, this, &SpectrogramControls::fftSizeChanged);
     connect(zoomLevelSlider, &QSlider::valueChanged, this, &SpectrogramControls::zoomLevelChanged);
     connect(fileOpenButton, &QPushButton::clicked, this, &SpectrogramControls::fileOpenButtonClicked);
     connect(cursorsCheckBox, &QCheckBox::stateChanged, this, &SpectrogramControls::cursorsStateChanged);
     connect(powerMinSlider, &QSlider::valueChanged, this, &SpectrogramControls::powerMinChanged);
     connect(powerMaxSlider, &QSlider::valueChanged, this, &SpectrogramControls::powerMaxChanged);
+
+    // Update value labels when sliders change
+    connect(fftSizeSlider, &QSlider::valueChanged, this, [this](int value) {
+        fftSizeLabel->setText(QString::number((int)pow(2, value)));
+    });
+    connect(zoomLevelSlider, &QSlider::valueChanged, this, [this](int value) {
+        zoomLevelLabel->setText(QString("%1×").arg((int)pow(2, value)));
+    });
+    connect(powerMaxSlider, &QSlider::valueChanged, this, [this](int value) {
+        powerMaxLabel->setText(QString("%1 dB").arg(value));
+    });
+    connect(powerMinSlider, &QSlider::valueChanged, this, [this](int value) {
+        powerMinLabel->setText(QString("%1 dB").arg(value));
+    });
 }
 
 void SpectrogramControls::clearCursorLabels()

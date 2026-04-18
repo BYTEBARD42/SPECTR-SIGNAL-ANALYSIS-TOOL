@@ -19,6 +19,7 @@
 
 #include <cstdlib>
 #include "tuner.h"
+#include "stylesheet.h"
 
 Tuner::Tuner(int height, QObject * parent) : height(height), QObject::QObject(parent)
 {
@@ -85,22 +86,28 @@ void Tuner::leaveEvent()
 void Tuner::paintFront(QPainter &painter, QRect &rect, range_t<size_t> sampleRange)
 {
     painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
 
     QRect cursorRect(rect.left(), rect.top() + minCursor->pos(), rect.right(), maxCursor->pos() - minCursor->pos());
 
-    // Draw translucent white fill for highlight
+    // Draw accent-tinted fill for highlight
     painter.fillRect(
         cursorRect,
-        QBrush(QColor(255, 255, 255, 50))
+        QBrush(Theme::cursorFill)
     );
 
-    // Draw tuner edges
-    painter.setPen(QPen(Qt::white, 1, Qt::SolidLine));
+    // Draw glow behind tuner edges
+    painter.setPen(QPen(Theme::cursorGlow, 4, Qt::SolidLine));
     painter.drawLine(rect.left(), rect.top() + minCursor->pos(), rect.right(), rect.top() + minCursor->pos());
     painter.drawLine(rect.left(), rect.top() + maxCursor->pos(), rect.right(), rect.top() + maxCursor->pos());
 
-    // Draw centre freq
-    painter.setPen(QPen(Qt::red, 1, Qt::SolidLine));
+    // Draw crisp tuner edges
+    painter.setPen(QPen(Theme::cursorLine, 1.5, Qt::SolidLine));
+    painter.drawLine(rect.left(), rect.top() + minCursor->pos(), rect.right(), rect.top() + minCursor->pos());
+    painter.drawLine(rect.left(), rect.top() + maxCursor->pos(), rect.right(), rect.top() + maxCursor->pos());
+
+    // Draw centre freq with amber color
+    painter.setPen(QPen(Theme::tunerCenter, 1.5, Qt::SolidLine));
     painter.drawLine(rect.left(), rect.top() + cfCursor->pos(), rect.right(), rect.top() + cfCursor->pos());
 
     painter.restore();
