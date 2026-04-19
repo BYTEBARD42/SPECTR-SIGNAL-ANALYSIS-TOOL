@@ -4,7 +4,7 @@ spectr is a tool for analysing captured signals, primarily from software-defined
 ![spectr screenshot](/screenshot.jpg)
 
 ## Features
- * Large (100GB+) file support
+ * Large (50GB+) file support
  * Spectrogram with zoom/pan
  * Plots of amplitude, frequency, phase and IQ samples
  * Cursors for measuring period, symbol rate and extracting symbols
@@ -13,14 +13,6 @@ spectr is a tool for analysing captured signals, primarily from software-defined
 ## Install
 ### Linux
 Install spectr with your package manager, it should be present in most distros.
-
-### macOS
- * [Homebrew](https://formulae.brew.sh/formula/spectr)
- * [MacPorts](https://ports.macports.org/port/spectr/)
-
-## Windows
- * [radioconda](https://github.com/ryanvolz/radioconda)
- * [conda](https://anaconda.org/conda-forge/spectr)
 
 ## Build from source
 ### Prerequisites
@@ -31,9 +23,6 @@ Install spectr with your package manager, it should be present in most distros.
  * pkg-config
  * qt5
 
-### Build instructions
-
-Build instructions can be found here: https://github.com/miek/spectr/wiki/Build
 
 ### Run
 
